@@ -1,11 +1,22 @@
 import {create} from 'zustand';
 
+const NullUser = {
+    id: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    isEmailVerified: false,
+    created_at: "",
+    updated_at: ""
+  }
+  
 export const useUserStore = create((set) => ({
-  user: null,
+  user: NullUser,
   isAuthenticated: false,
-  setUser: (user) => set({user, isAuthenticated: !!user}),
+  setUser: (user) => set({...user}),
   setAuth: (isAuthenticated) => set({isAuthenticated}),
-  logout: () => set({user: null, isAuthenticated: false}),
+  logout: () => set({user: NullUser, isAuthenticated: false}),
 }));
 
 export const useStepFormStore = create((set) => ({

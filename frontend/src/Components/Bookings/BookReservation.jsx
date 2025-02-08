@@ -10,10 +10,10 @@ import {useStepFormStore} from "../../store/index.js";
 function BookReservation() {
   const setStep = useStepFormStore((state) => state.setStep)
   const [createReservation, {isLoading, error: err, data}] = useCreateReservationMutation();
-  const navigate = useNavigate();
   const [date, setDate] = useState(new Date());
-  const [isSubmitting, setIsSubmitting] = useState(!!0)
   const [error, setError] = useState(!!0)
+  const [isSubmitting, setIsSubmitting] = useState(!!0)
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     shortlet: "",
     checkInDate: date.toDateString(),
@@ -52,11 +52,10 @@ function BookReservation() {
       setIsSubmitting(!!0)
       return !0
     }
-    console.log(formData)
 
     try {
-      const {sessionId} = await createReservation(formData).unwrap();
-      if(sessionId === "create-account") {
+      const {reservationId} = await createReservation(formData).unwrap();
+      if(reservationId === "create-account") {
         setStep(3)
         localStorage.setItem("step", "bookings")
         navigate('/one_time_password')
@@ -67,6 +66,7 @@ function BookReservation() {
       console.error("Create session failed:", err);
       setIsSubmitting(!!0)
     }
+
   }
 
   return (

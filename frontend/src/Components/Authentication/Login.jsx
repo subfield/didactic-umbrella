@@ -8,37 +8,38 @@ import {useUserStore} from "../../store/index.js";
 function Login() {
   const setAuth = useUserStore((state) => state.setAuth)
   const navigate = useNavigate();
-  const [userLogin, { error: err}] = useUserLoginMutation();
+  const [userLogin, {error: err}] = useUserLoginMutation();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errMsg, setErrMsg] = useState("")
   const [error, setError] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(!!0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(false);
-  
+
+
     // Validation
     if (!email || !password) {
       setError(true);
       setErrMsg("All fields are required");
-      setIsSubmitting(false);
+    setIsSubmitting(false);
       return;
     }
-  
+
     try {
       const response = await userLogin({ email, password });
-  
+
       if (!response?.data) {
         throw new Error("Invalid response from server");
       }
-  
+
       const { data, status } = response;
       console.log({ data, status });
-  
+
       if (data?.message?.includes("User logged in")) {
         setAuth(true);
         navigate("/dashboard");
@@ -49,8 +50,7 @@ function Login() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-  
+  }
   return (
     <>
         <div className="flex flex-col md:flex-row container mx-auto min-h-screen">
@@ -76,7 +76,6 @@ function Login() {
             <div>
               <label className="block text-gray-600 mb-1">Email Address</label>
               <input
-                  name="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 type="text"
@@ -88,7 +87,6 @@ function Login() {
             <div>
               <label className="block text-gray-600 mb-1">Password</label>
               <input
-                  name='password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 type="password"

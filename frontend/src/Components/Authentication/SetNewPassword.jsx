@@ -1,12 +1,13 @@
 import {useNavigate} from 'react-router-dom'
 import GetStartedImg from '../../assets/Images/AuthImages/GetStarted.svg'
-import {useCreateUserMutation} from "../../../redux/api.js";
+import {useCreateUserMutation, useVerifyOtpMutation} from "../../../redux/api.js";
 import {useStepFormStore} from "../../store/index.js";
 import {useEffect, useState} from "react";
 import {Loader2} from "lucide-react";
 
 function SetNewPassword() {
   const [createUser, {isLoading, error: err}] = useCreateUserMutation();
+  const [verifyOtp, {isLoading: sessionSaveLoading, error: sessionLoadErr}] = useVerifyOtpMutation();
   const navigate = useNavigate();
   const step = useStepFormStore((state) => state.step)
   const resetForm = useStepFormStore((state) => state.resetForm)
@@ -21,8 +22,10 @@ function SetNewPassword() {
   const {firstName, lastName, email, phone, password} = formData
 
   useEffect(() => {
-    if (!firstName || !lastName || !email || !phone) {
-      navigate("/signup")
+    if(step !== 3){
+      if (!firstName || !lastName || !email || !phone) {
+        navigate("/signup")
+      }
     }
   }, [formData])
 
@@ -49,7 +52,15 @@ function SetNewPassword() {
       if(step === 2) {
        res = await createUser(formData).unwrap();
       } else if (step === 3) {
-        // add te endpoint to send password and otp to create the session users
+        const {data: sessionData} = await verifyOtp({
+          token: localStorage.getItem('token'),
+          stage: 'session',
+          password
+        })
+        if(sessionData.message.includes('success')) {
+          localStorage.removeItem('token')
+          navigate(`/login`)
+        }
       }
       if(res.user === "create-account") {
         navigate('/one_time_password')
@@ -72,12 +83,12 @@ function SetNewPassword() {
         <div className="w-full md:w-1/2 flex flex-col py-6">
           {/* Top Light Background */}
           <div className="w-full px-8 py-6">
-          <span
-            onClick={() => navigate(-1)}
-            className="text-pink-600 font-semibold mb-4 inline-block self-start p-1 cursor-pointer"
-          >
+            {step !== 3 ? (<span
+              onClick={() => navigate(-1)}
+              className="text-pink-600 font-semibold mb-4 inline-block self-start p-1 cursor-pointer"
+            >
             &larr; Go back
-          </span>
+          </span>) : ("")}
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
               Set new password
             </h2>
@@ -88,7 +99,7 @@ function SetNewPassword() {
             <form className="space-y-6 max-w-md">
 
               {error ? <span className="text-red-500 text-sm italic block py-3">{errMsg}</span> : ""}
-              {err ? <span
+              {err || sessionLoadErr ? <span
                 className="text-red-500 text-sm font-medium block py-3">Error occurred while submitting your data</span> : ""}
               <div>
                 <label className="block text-gray-600 mb-1">New Password</label>
@@ -114,12 +125,12 @@ function SetNewPassword() {
 
               {/* Resend and Submit */}
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">
+                {step !== 3 ? (<p className="text-sm text-gray-600">
                   {" "}
                   <a href="/" onClick={resetForm} className="text-pink-600 font-bold">
                     Go back to login
                   </a>
-                </p>
+                </p>) : ("")}
                 <button
                   onClick={handleSubmit}
                   type="submit"

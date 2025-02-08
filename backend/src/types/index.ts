@@ -23,6 +23,17 @@ export interface iTempUserStore {
   checkOutDate?: string;
   shortlet?: string;
   
+  service?: string;
+  serviceType?: string;
+  businessName?: string;
+  businessIndustry?: string;
+  businessEmail?: string;
+  businessLocation?: string;
+  businessBrief?: string;
+  whyApply?: string;
+  paymentType?: string;
+  paymentPlan?: string;
+  
   path: string;
   expiresAt?: number;
   resendTime?: number;

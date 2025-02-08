@@ -1,9 +1,6 @@
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import { useGetSessionByUserIdQuery } from "../../../redux/api";
 
 export default function Dashboard() {
-    const {data: booking, isLoading, isError} = useGetSessionByUserIdQuery()
-  
   const applications = [
     {
       id: "CB001",
@@ -48,8 +45,7 @@ export default function Dashboard() {
       date: "Aug 14, 2024 at 10:23am",
     },
   ];
-  if (isLoading) return <p>Loading Total count...</p>
-  if (isError) return <p>Error loading count.</p>
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -58,7 +54,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Applications</p>
-              <h3 className="text-2xl font-semibold">{booking.count()}</h3>
+              <h3 className="text-2xl font-semibold">60</h3>
             </div>
             <a href="#" className="text-sm text-purple-600 hover:underline">
               View all
@@ -70,7 +66,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Bookings</p>
-              <h3 className="text-2xl font-semibold">{booking.count()}</h3>
+              <h3 className="text-2xl font-semibold">12</h3>
             </div>
             <a href="#" className="text-sm text-purple-600 hover:underline">
               View bookings

@@ -5,6 +5,7 @@ import { AppDataSource } from "./database";
 import userRouter from "./routes/user.route";
 import reserveRouter from "./routes/reservation.route";
 import sessionRouter from "./routes/session.route";
+import requestRouter from "./routes/request.route";
 
 const app = express();
 
@@ -22,6 +23,7 @@ const port = process.env.PORT || 3000;
 app.use(userRouter);
 app.use(reserveRouter);
 app.use(sessionRouter);
+app.use(requestRouter);
 
 app.listen(port, () => {
   console.log(`The server is running at http://localhost:${port}`);

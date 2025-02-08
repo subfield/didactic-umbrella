@@ -1,7 +1,7 @@
-import Datastore from 'nedb';
+// import Datastore from 'nedb';
 import { createDB } from "./connect.db";
 import {iTempUserStore} from "../types";
-import {serverTime} from "../utils";
+import {serverTime} from "../utils"
 import Nedb from 'nedb';
 
 class useUserDB {
@@ -48,11 +48,22 @@ class useUserDB {
   
   
   // Read User by Email
-  read(token: string): Promise<iTempUserStore | null> {
+  // read(token: string): Promise<iTempUserStore | null> {
+  //   return new Promise((resolve, reject) => {
+  //     this.db.findOne({ otp: token }, (err, doc) => {
+  //       if (err) reject(err);
+  //       else resolve(doc);
+  //     });
+  //   });
+  // }
+  
+  read(identifier: string): Promise<iTempUserStore | null> {
     return new Promise((resolve, reject) => {
-      this.db.findOne({ otp: token }, (err, doc) => {
+      this.db.findOne({
+        $or: [{ email: identifier }, { otp: identifier }],
+      }, (err, doc) => {
         if (err) reject(err);
-        else resolve(doc);
+        else resolve(doc || null);
       });
     });
   }

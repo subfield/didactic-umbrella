@@ -1,6 +1,8 @@
 import {useNavigate} from 'react-router-dom'
 import {useEffect, useState} from "react";
 import {Loader2} from "lucide-react";
+import {useStepFormStore} from "../../store/index.js";
+import {useCreateRequestMutation} from "../../../redux/api.js";
 
 const formDataInitial = {
   service: "",
@@ -13,7 +15,7 @@ const formDataInitial = {
   businessIndustry: "",
   businessEmail: "",
   businessBrief: "",
-  loanReason: "",
+  whyApply: "",
   otherInfo: "",
   businessLocation: "",
   paymentType: "",
@@ -23,6 +25,10 @@ const formDataInitial = {
 function RequestService() {
   const [formData, setFormData] = useState(formDataInitial);
   const navigate = useNavigate();
+
+  const setStep = useStepFormStore((state) => state.setStep)
+  const [createRequest, {isLoading, error: err, data}] = useCreateRequestMutation();
+  const [error, setError] = useState(!!0)
 
   const [isSubmitting, setIsSubmitting] = useState(!!0)
 
@@ -42,25 +48,51 @@ function RequestService() {
     businessEmail,
     businessLocation,
     businessBrief,
-    loanReason,
+    whyApply,
     otherInfo,
     paymentType,
     paymentPlan
   } = formData
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     setIsSubmitting(!!1)
     e.preventDefault();
 
-    // navigate("/thank-you");
-    setTimeout(() => {
+    if(
+      !service ||
+      !serviceType ||
+      !firstName ||
+      !lastName ||
+      !phone ||
+      !email ||
+      !businessName ||
+      !businessIndustry ||
+      !businessLocation ||
+      !businessBrief ||
+      !whyApply ||
+      !paymentType ||
+      !paymentPlan
+    ) {
+      setError(true)
       setIsSubmitting(!!0)
-    }, 3000);
-  }
+      return !0
+    }
 
-    useEffect(() => {
-      console.log(formData)
-    }, [formData])
+    // navigate("/thank-you");
+    try {
+      const {requestId} = await createRequest(formData).unwrap();
+      if(requestId === "create-account") {
+        setStep(3)
+        localStorage.setItem("step", "bookings")
+        navigate('/one_time_password')
+      } else {
+        navigate(`/dashboard`)
+      }
+    } catch (err) {
+      console.error("Create session failed:", err);
+      setIsSubmitting(!!0)
+    }
+  }
 
     return (
       <>
@@ -82,6 +114,9 @@ function RequestService() {
           <div className="max-w-6xl mx-auto bg-white p-8">
             {/* SERVICE DETAILS */}
             <h3 className="text-lg font-semibold text-gray-500 mb-4">SERVICE DETAILS</h3>
+            {error ? <span className="text-red-500 text-sm italic block py-3">* Fill all required fields</span> : ""}
+            {err ? <span
+                className="text-red-500 text-sm font-medium block py-3">Error occurred while submitting your data</span> : ""}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <div>
                 <label className="block text-gray-600 mb-1">Service</label>
@@ -222,8 +257,8 @@ function RequestService() {
               </label>
               <textarea
                 onChange={handleChange}
-                value={loanReason}
-                name="loanReason"
+                value={whyApply}
+                name="whyApply"
                 rows={3}
                 className="w-full border border-gray-300 px-4 py-2   focus:outline-none focus:ring-2 focus:ring-pink-500"
               ></textarea>

@@ -37,5 +37,10 @@ export class RequestService extends BaseEntity{
 
     @Column({ type: "varchar", length: 255 })
     otherInfo: string
-
+    
+    @Column({ type: "varchar", length: 255 })
+    paymentType: string
+    
+    @Column({ type: "varchar", length: 255 })
+    paymentPlan: string
 }

@@ -72,6 +72,15 @@ export const api = createApi({
       }),
     }),
 
+    // user login
+    createRequest: builder.mutation({
+      query: (requestServiceData) => ({
+        url: "/requestService",
+        method: "POST",
+        body: requestServiceData,
+      }),
+    }),
+
     // validate token
     validateToken: builder.mutation({
       query: () => ({
@@ -106,7 +115,8 @@ export const {
   useFilterReservationsQuery,
   useUserLoginMutation,
   useValidateTokenMutation,
-  useGetSessionByUserIdQuery
+  useGetSessionByUserIdQuery,
+  useCreateRequestMutation,
 } = api;
 
 export default api;

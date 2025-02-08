@@ -6,21 +6,27 @@ import useUserDB from "../localDB/tempStorage";
 import {random} from "lodash";
 import {iTempUserStore} from "../types";
 import {sendVerificationEmail} from "../utils/EmailServices";
+import {expirationDate, LIVE_SITE, MODE} from "./auth.controller";
+
 
 export class sessionController {
   private sessionRepository = AppDataSource.getRepository(Session);
   
   async createSession(req: Request, res: Response) {
     try {
-      const {sessionDate: date, sessionTime: time, purpose, otherInfo} = req.body;
+      const {sessionDate: date, sessionTime: time, purpose, otherInfo, internal} = req.body;
       
       const id = req.user?.id;
       
       if (id) {
         const user = await User.findOneBy({id});
-        const newSession = this.sessionRepository.create({date, time, purpose, otherInfo, user})
+        const newSession = this.sessionRepository.create({date, purpose, otherInfo, user})
         await this.sessionRepository.save(newSession)
-        return res.status(201).json({sessionId: newSession.id});
+        if(internal === 'yes') {
+          // return 0
+        } else {
+          return res.status(201).json({sessionId: newSession.id});
+        }
       } else {
         const {firstName, lastName, phone, email} = req.body;
         const otp = `${random(100000, 999999)}`
@@ -37,10 +43,30 @@ export class sessionController {
           path: "session"
         }
         useUserDB.createUser(unRegisteredUser)
-        sendVerificationEmail(email, lastName, otp)
-        return res.status(200).json({sessionId: 'create-account'});
+        // sendVerificationEmail(email, lastName, otp)
+        const maxAge = MODE === "prod" ? expirationDate : 45 * 60 * 1000;
+        
+        let domain;
+        
+        if (MODE === "dev") {
+          domain = "localhost";
+        } else {
+          domain = LIVE_SITE;
+        }
+        
+        res.cookie("tempEmail", email, {
+          httpOnly: true,
+          secure: MODE === "prod",
+          sameSite: MODE === "prod" ? "none" : "lax",
+          maxAge,
+          domain: `${domain}`,
+        });
+        if(internal === 'yes') {
+          // return 0
+        } else {
+          return res.status(200).json({sessionId: 'create-account'});
+        }
       }
-      
     } catch (error) {
       return res.status(500).json({error: error.message});
       

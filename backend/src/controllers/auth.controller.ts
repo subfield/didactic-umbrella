@@ -7,20 +7,22 @@ import {Request, Response} from 'express'
 import {omit, random} from "lodash";
 import useOTP from "../localDB/otp"
 import useUserDB from "../localDB/tempStorage"
-import {sendVerificationEmail} from "../utils/EmailServices";
+// import {sendVerificationEmail} from "../utils/EmailServices";
 
 import {sessionController} from "./session.controller";
 import {reservationController} from "./reservation.controller";
+import {RequestController} from "./request-service.controller";
 
 const sessionCtrl = new sessionController();
 const reservationCtrl = new reservationController();
+const requestCtrl = new RequestController();
 
 const jwtSecret = process.env.JWT_SECRET as string;
 const COOKIE_EXPIRATION_DAYS = 1; // cookie expiration in days
-const expirationDate = COOKIE_EXPIRATION_DAYS * 24 * 60 * 60 * 1000
+export const expirationDate = COOKIE_EXPIRATION_DAYS * 24 * 60 * 60 * 1000
 
-const MODE = process.env.MODE
-const LIVE_SITE = process.env.LIVE_SITE
+export const MODE = process.env.MODE
+export const LIVE_SITE = process.env.LIVE_SITE
 
 export class registerController {
   private registerRepository = AppDataSource.getRepository(User)
@@ -30,33 +32,33 @@ export class registerController {
     return res.json(allUsers);
   }
   
-async getUserById(req: Request, res: Response) {
-  try {
-    let id
-    id = req.params.id;
-    if(!id) {
-    id = req.user?.id
+  async getUserById(req: Request, res: Response) {
+    try {
+      let id
+      id = req.params.id;
+      if (!id) {
+        id = req.user?.id
+      }
+      const user_id = id
+      
+      if (!user_id) {
+        return res.status(400).json({error: "User ID is required"});
+      }
+      
+      const oneUser = await this.registerRepository.findOne({where: {id: user_id}});
+      
+      if (!oneUser) {
+        return res.status(404).json({error: "User not found"});
+      }
+      
+      const safeUser = omit(oneUser, 'password', 'verificationToken')
+      
+      return res.json(safeUser);
+    } catch (error) {
+      return res.status(500).json({error: error.message});
     }
-    const user_id = id
-
-    if (!user_id) {
-      return res.status(400).json({ error: "User ID is required" });
-    }
-
-    const oneUser = await this.registerRepository.findOne({ where: { id: user_id } });
-
-    if (!oneUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    const safeUser = omit(oneUser, 'password', 'verificationToken')
-
-    return res.json(safeUser);
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
   }
-}
-
+  
   
   async createUser(req: Request, res: Response) {
     try {
@@ -83,9 +85,10 @@ async getUserById(req: Request, res: Response) {
       
       // send verification email and save otp in localDB for verification
       useOTP.save(email, token)
-      sendVerificationEmail(email, lastName, token)
+      // sendVerificationEmail(email, lastName, token)
       return res.status(201).json({
-        message: "created successfully"});
+        message: "created successfully"
+      });
     } catch (error) {
       return res.status(500).json({error: error.message});
     }
@@ -131,10 +134,11 @@ async getUserById(req: Request, res: Response) {
         return res.status(200).json({message: "Email successfully verified!"});
         
       } else {
+        const email = req.cookies.tempEmail
+        console.log(email)
         const {
           firstName,
           lastName,
-          email,
           phone,
           path,
           date,
@@ -145,15 +149,25 @@ async getUserById(req: Request, res: Response) {
           checkInDate,
           checkInTime,
           checkOutDate,
-          otherInfo
-        } = await useUserDB.read(token)
+          service,
+          serviceType,
+          businessName,
+          businessIndustry,
+          businessEmail,
+          businessLocation,
+          businessBrief,
+          whyApply,
+          otherInfo,
+          paymentType,
+          paymentPlan,
+        } = await useUserDB.read(email ?? token)
         
         if (serverTime().valueOf() > expiresAt.valueOf()) {
           return res.status(400).json({message: "Token expired"});
         }
         
         if (!password) {
-          return res.status(400).json({message: "Provide a  password"});
+          return res.status(200).json({message: "set-password", data: {token}});
         }
         
         const encryptedPassword = await encryptPassword(password);
@@ -165,18 +179,40 @@ async getUserById(req: Request, res: Response) {
           phone,
           password: encryptedPassword,
           isEmailVerified: true,
-          verificationToken: "sessionBased"
+          verificationToken: "RequestSessionReservationBased"
         })
         
         await this.registerRepository.save(newUser)
         
         if (path === 'session') {
-          req.body = {sessionDate: date, sessionTime: time, purpose, otherInfo};
+          req.body = {sessionDate: date, sessionTime: time, purpose, otherInfo, internal: 'yes'};
+          req.user = {email, id: newUser.id}
           sessionCtrl.createSession(req, res)
-        } else {
-          req.body = {shortlet, checkInDate, checkInTime, checkOutDate, otherInfo};
+        } else if (path === 'reservation') {
+          req.body = {shortlet, checkInDate, checkInTime, checkOutDate, otherInfo, internal: 'yes'};
+          req.user = {email, id: newUser.id}
           reservationCtrl.createReservation(req, res)
+        } else if (path === 'request') {
+          req.body = {
+            service,
+            serviceType,
+            businessName,
+            businessIndustry,
+            businessEmail,
+            businessLocation,
+            businessBrief,
+            whyApply,
+            otherInfo,
+            paymentType,
+            paymentPlan, internal: 'yes'
+          };
+          req.user = {email, id: newUser.id}
+          requestCtrl.createRequestService(req, res)
         }
+        
+        useUserDB.deleteUser(email)
+        res.cookie('tempEmail', '', {expires: new Date(0)})
+        return res.status(200).json({message: "successfully created user and session"})
       }
     } catch (error) {
       console.error("Error verifying email:", error);
@@ -193,7 +229,7 @@ async getUserById(req: Request, res: Response) {
       if (!stage) {
         return res.status(400).json({message: "Provide verification Stage"});
       }
-        const token = `${random(100000, 999999)}`;
+      const token = `${random(100000, 999999)}`;
       
       if (stage !== 'session') {
         const user = await this.registerRepository.findOneBy({email})
@@ -203,7 +239,7 @@ async getUserById(req: Request, res: Response) {
         }
         
         await useOTP.save(email, token)
-        sendVerificationEmail(email, user.lastName, token)
+        // sendVerificationEmail(email, user.lastName, token)
         
         return res.status(200).json({message: "Email resent successfully!"});
         
@@ -229,7 +265,7 @@ async getUserById(req: Request, res: Response) {
       if (!user.isEmailVerified) {
         return res.status(400).json({message: "email is not verified"});
       }
-
+      
       const safeUser = omit(user, 'password', 'verificationToken')
       
       const token = await this.createSendToken(user!)
