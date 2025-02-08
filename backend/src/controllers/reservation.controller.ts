@@ -15,26 +15,29 @@ export class reservationController{
      }
 
      async getReservationByUserId(req: Request, res: Response) {
-      try {
-          const { user_id } = req.params;
-  
-          console.log("Fetching reservations for user:", user_id); 
-  
-          const reservations = await this.reservationRespository
-              .createQueryBuilder("reserve")
-              .leftJoinAndSelect("reserve.user", "user") 
-              .where("user.id = :id", { id: user_id }) 
-              .getMany(); 
-  
-          if (!reservations.length) {
-              return res.status(404).json({ message: "No reservations found for this user" });
-          }
-  
-          return res.json(reservations);
-      } catch (error) {
-          return res.status(500).json({ error: error.message });
-      }
-  }
+        try {
+            const id = req.user?.id
+            const user_id = id
+            
+            console.log("Fetching reservations for user:", user_id);
+    
+    
+            const reservations = await this.reservationRespository
+                .createQueryBuilder("reserve")
+                .leftJoinAndSelect("reserve.user", "user") 
+                .where("user.id = :id", { id: user_id }) 
+                .getMany(); 
+    
+            if (!reservations.length) {
+                return res.status(404).json({ message: "No reservations found for this user" });
+            }
+    
+            return res.json(reservations);
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+    
   
 
      async getReservationById(req: Request, res: Response) {

@@ -84,7 +84,7 @@ console.log({booking})
             {booking.map((booking) => (
               <tr key={booking.id}>
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{booking.date}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{booking.type}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{booking.purpose}</td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm">
                   <span
                     className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${

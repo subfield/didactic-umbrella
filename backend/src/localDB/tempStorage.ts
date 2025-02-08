@@ -2,9 +2,10 @@ import Datastore from 'nedb';
 import { createDB } from "./connect.db";
 import {iTempUserStore} from "../types";
 import {serverTime} from "../utils";
+import Nedb from 'nedb';
 
 class useUserDB {
-  private db: Datastore;
+  private db: Nedb;
   
   constructor() {
     this.db = createDB("tempUser");

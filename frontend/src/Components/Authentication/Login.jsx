@@ -8,7 +8,7 @@ import {useUserStore} from "../../store/index.js";
 function Login() {
   const setAuth = useUserStore((state) => state.setAuth)
   const navigate = useNavigate();
-  const [userLogin, {isLoading, error: err, data}] = useUserLoginMutation();
+  const [userLogin, { error: err}] = useUserLoginMutation();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errMsg, setErrMsg] = useState("")
@@ -18,31 +18,39 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(!!1);
+    setIsSubmitting(true);
     setError(false);
-
-
+  
     // Validation
-    if (!email ||!password) {
+    if (!email || !password) {
       setError(true);
       setErrMsg("All fields are required");
-    setIsSubmitting(!!0);
+      setIsSubmitting(false);
       return;
     }
-
+  
     try {
-      const {data, status} = await userLogin({email, password})
-      console.log({data, status})
-      if(data.message.includes('User logged in')) {
-        setAuth(!!1)
-        navigate("/dashboard")
+      const response = await userLogin({ email, password });
+  
+      if (!response?.data) {
+        throw new Error("Invalid response from server");
       }
-    setIsSubmitting(!!0);
+  
+      const { data, status } = response;
+      console.log({ data, status });
+  
+      if (data?.message?.includes("User logged in")) {
+        setAuth(true);
+        navigate("/dashboard");
+      }
     } catch (e) {
-      console.log({e})
-    setIsSubmitting(!!0);
+      console.error("Login Error:", e);
+      setErrMsg("Login failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
+  
   return (
     <>
         <div className="flex flex-col md:flex-row container mx-auto min-h-screen">
@@ -68,6 +76,7 @@ function Login() {
             <div>
               <label className="block text-gray-600 mb-1">Email Address</label>
               <input
+                  name="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 type="text"
@@ -79,6 +88,7 @@ function Login() {
             <div>
               <label className="block text-gray-600 mb-1">Password</label>
               <input
+                  name='password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 type="password"

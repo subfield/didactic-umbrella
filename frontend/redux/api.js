@@ -33,7 +33,7 @@ export const api = createApi({
 
     // Fetch User Reservations
     getUserReservations: builder.query({
-      query: (userId) => `/reservations/user/${userId}`,
+      query: () => `/reservations/user`,
     }),
 
     // Create Session

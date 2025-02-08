@@ -1,12 +1,12 @@
 import { useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Link } from "react-router-dom"
-import { useGetReservationByIdQuery } from "../../../redux/api"
+import {  useGetUserReservationsQuery } from "../../../redux/api"
 
 export default function ApplicationsPage() {
   const [activeTab, setActiveTab] = useState("All")
 
-  const {data: Apps, isLoading, isError} = useGetReservationByIdQuery()
+  const {data: Apps, isLoading, isError} = useGetUserReservationsQuery()
   // const applications = [
   //   { date: "Aug 24, 2024 at 10:00am", type: "Loan Service", status: "Pending", id: "1" },
   //   { date: "Aug 19, 2024 at 1:00am", type: "Loan Service", status: "Pending", id: "2" },
@@ -73,7 +73,7 @@ export default function ApplicationsPage() {
         {Apps.map((app) => (
           <tr key={app.id}>
             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{app.date}</td>
-            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{app.type}</td>
+            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{app.purpose}</td>
             <td className="whitespace-nowrap px-6 py-4 text-sm">
               <span
                 className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
